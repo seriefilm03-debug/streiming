@@ -1,79 +1,303 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YAMONFILM - Accueil</title>
-    <style>
-        body { background-color: #0f0f0f; color: white; font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-        h1 { text-align: center; color: #e50914; margin-bottom: 30px; font-size: 32px; }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 20px;
-            padding: 20px 5%;
-        }
-        .movie-card {
-            background-color: #1c1c1c;
-            border-radius: 8px;
-            overflow: hidden;
-            text-align: center;
-            transition: transform 0.3s;
-            cursor: pointer;
-            text-decoration: none;
-            color: white;
-            border: 1px solid #333;
-        }
-        .movie-card:hover { transform: scale(1.05); border-color: #e50914; }
-        .movie-card img { width: 100%; height: 270px; object-fit: cover; display: block; }
-        .movie-card p { padding: 12px; margin: 0; font-size: 14px; font-weight: bold; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YAMONFILM</title>
+
+<style>
+/* --- STYLE DE BASE --- */
+*{ margin:0; padding:0; box-sizing:border-box; font-family:Arial, sans-serif; }
+body{ background:#141414; color:white; overflow-x:hidden; }
+
+/* NAV & MENU LATÉRAL */
+.navbar{
+  position:fixed; top:0; left:0; width:100%; height:60px;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:0 20px; background:linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+  z-index:1000;
+}
+.logo{ color:#e50914; font-size:28px; font-weight:bold; text-decoration:none;}
+.menu-btn{ font-size:28px; cursor:pointer; z-index: 2100; }
+
+.overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(6px); opacity:0; pointer-events:none; transition:0.3s; z-index:1500; }
+.overlay.show{ opacity:1; pointer-events:auto; }
+.side-menu{ position:fixed; top:0; right:-100%; width:300px; height:100%; background:#111; padding:80px 20px 20px; display:flex; flex-direction:column; gap:15px; transition:0.3s; z-index:2000; border-left: 1px solid #333;}
+.side-menu.open{ right:0; }
+.side-menu a, .side-menu button{ color:white; text-decoration:none; background:none; border:none; font-size:18px; padding:10px 0; cursor:pointer; text-align:left; border-bottom: 1px solid #222;}
+
+/* ZONE VIP */
+.promo-box { padding: 10px 0; border-bottom: 1px solid #222; }
+.activate-btn { background: #e50914; color: white; width: 100%; padding: 10px; border-radius: 4px; border: none; font-weight: bold; margin-top: 10px; cursor: pointer; text-align: center; text-decoration: none; display: block;}
+
+/* HERO CARROUSEL */
+.hero-container { position: relative; width: 100%; height: 80vh; overflow: hidden; }
+.hero-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1.5s ease-in-out; background-size: cover; background-position: center; display: flex; flex-direction: column; justify-content: center; padding: 0 5%; }
+.hero-slide.active { opacity: 1; }
+.hero-slide::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to right, rgba(0,0,0,0.8), transparent 60%), linear-gradient(to top, #141414, transparent 40%); }
+.hero-content { position: relative; z-index: 10; max-width: 600px; }
+.hero-content h1 { font-size: clamp(35px, 6vw, 70px); margin-bottom: 10px; }
+.play-btn { padding: 12px 35px; background: white; color: black; text-decoration: none; font-weight: bold; border-radius: 4px; display: inline-flex; transition: 0.3s; }
+.play-btn:hover { background: #e50914; color: white; }
+
+/* STYLE BARRE DE RECHERCHE INTEGRÉE */
+.search-section { padding: 30px 5% 0px; display: flex; justify-content: flex-end; }
+.search-wrapper { position: relative; width: 100%; max-width: 400px; }
+.search-input { width: 100%; padding: 12px 40px 12px 15px; background: #222; border: 1px solid #444; color: white; border-radius: 25px; font-size: 16px; transition: 0.3s; }
+.search-input:focus { border-color: #e50914; outline: none; background: #2b2b2b; }
+.search-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #666; font-size: 18px; pointer-events: none; }
+
+/* BANNIÈRE DEMANDE */
+.request-banner-section { padding: 40px 5% 0px; }
+.request-banner { display: flex; justify-content: space-between; align-items: center; background: #1f1f1f; padding: 20px 30px; border-radius: 6px; border: 1px solid #333; gap: 20px; }
+.request-banner-text h3 { font-size: 20px; margin-bottom: 5px; }
+.request-banner-text p { color: #aaa; font-size: 14px; }
+.request-link-btn { background: #e50914; color: white; text-decoration: none; font-weight: bold; padding: 12px 25px; border-radius: 4px; transition: 0.3s; text-align: center; white-space: nowrap; }
+.request-link-btn:hover { background: white; color: black; }
+
+/* REPRENDRE LA LECTURE */
+.continue-section { padding: 40px 5% 10px; display: none; }
+.continue-grid { display: flex; gap: 20px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; }
+.continue-card { min-width: 260px; text-decoration: none; color: white; transition: 0.3s; }
+.continue-card:hover { transform: scale(1.05); }
+.img-container { position: relative; width: 100%; height: 145px; border-radius: 4px; overflow: hidden; background: #222; }
+.img-container img { width: 100%; height: 100%; object-fit: cover; }
+
+/* GRILLE FILMS ET SERIES */
+.movies-label { padding: 30px 5% 0; font-size: 22px; font-weight: bold; transition: 0.2s; }
+.movies { padding: 20px 5%; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+.movie { height: 300px; background-size: cover; background-position: center; border-radius: 4px; display: flex; align-items: flex-end; padding: 15px; text-decoration: none; color: white; font-weight: bold; transition: 0.3s; border: 1px solid transparent; text-shadow: 1px 1px 4px rgba(0,0,0,0.8); }
+.movie:hover { transform: scale(1.05); border-color: #555; }
+
+@media (max-width: 600px) {
+    .request-banner { flex-direction: column; text-align: center; padding: 20px; }
+    .request-link-btn { width: 100%; }
+    .search-section { justify-content: center; }
+}
+</style>
 </head>
 <body>
 
-    <h1>YAMONFILM</h1>
-    <div class="grid" id="catalog"></div>
+<div class="navbar">
+  <a href="index.html" class="logo">YAMONFILM</a>
+  <div class="menu-btn" onclick="toggleMenu()">☰</div>
+</div>
 
-    <script>
-        // Ta vraie clé API TMDb intégrée
-        const API_KEY = '182c7173698e34803715eacab5c693a7'; 
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+<div class="side-menu" id="menu">
+    <a href="account.html">Mon compte</a>
+    <a href="series.html">Mes séries</a>
+    
+    <div class="promo-box">
+        <span style="color: #666; font-size: 12px;">ZONE VIP</span>
+        <a href="debloquer.html" class="activate-btn">Activer un code</a>
+    </div>
 
-        // AJOUTE OU RETIRE TES FILMS ET SÉRIES ICI :
-        // 'movie' pour un film, 'tv' pour une série
-        const maSelection = [
-            { id: 600, type: 'tv' },         /* Le Rebelle (Série) */
-            { id: 550, type: 'movie' },       /* Fight Club (Film) */
-            { id: 27205, type: 'movie' },     /* Inception (Film) */
-            { id: 1396, type: 'tv' }          /* Breaking Bad (Série) */
-        ];
+    <button id="logoutBtn" style="margin-top: auto; color: #e50914; text-align: left; padding: 10px 0;">Déconnexion</button>
+</div>
 
-        const catalog = document.getElementById('catalog');
+<!-- CARROUSEL -->
+<section class="hero-container">
+    <div class="hero-slide active" style="background-image: url('https://media.senscritique.com/media/000006485088/0/le_clown.jpg');">
+        <div class="hero-content">
+            <h1>Le Clown</h1>
+            <p>Le justicier au masque de cuir revient pour faire régner la justice.</p><br>
+            <a id="heroClownBtn" href="le clown.html" class="play-btn">▶ Lecture</a>
+        </div>
+    </div>
+    <div class="hero-slide" style="background-image: url('s-l1200.jpg');">
+        <div class="hero-content">
+            <h1>Medicopter 117</h1>
+            <p>Des vies en jeu, une équipe d'élite prête à tout.</p><br>
+            <a id="heroMedicBtn" href="medicopter.html" class="play-btn">▶ Lecture</a>
+        </div>
+    </div>
+</section>
 
-        maSelection.forEach(item => {
-            fetch(`https://api.themoviedb.org/3/${item.type}/${item.id}?api_key=${API_KEY}&language=fr-FR`)
-                .then(response => response.json())
-                .then(media => {
-                    const movieCard = document.createElement('a');
-                    movieCard.className = 'movie-card';
-                    
-                    // Envoie vers la page de lecture avec l'ID et le type (film ou série)
-                    movieCard.href = `player.html?id=${media.id}&type=${item.type}`;
+<!-- NOUVELLE BARRE DE RECHERCHE LOCALISÉE -->
+<section class="search-section">
+    <div class="search-wrapper">
+        <input type="text" id="localSearch" class="search-input" placeholder="Rechercher un film ou une série sur le site...">
+        <span class="search-icon">🔍</span>
+    </div>
+</section>
 
-                    const posterUrl = media.poster_path 
-                        ? `https://image.tmdb.org/t/p/w500${media.poster_path}`
-                        : 'https://via.placeholder.com/500x750/222/fff?text=Pas+d%27image';
+<section class="request-banner-section">
+    <div class="request-banner">
+        <div class="request-banner-text">
+            <h3>Une idée de film ou de série ?</h3>
+            <p>Fais une demande d'ajout directement en recherchant ton contenu sur TMDB.</p>
+        </div>
+        <a href="ajouter un film.html" class="request-link-btn">Faire une demande</a>
+    </div>
+</section>
 
-                    const nomDuMedia = media.title || media.name;
+<section id="continue-watching" class="continue-section">
+    <h3>Reprendre la lecture</h3>
+    <div id="continue-container" class="continue-grid"></div>
+</section>
 
-                    movieCard.innerHTML = `
-                        <img src="${posterUrl}" alt="${nomDuMedia}">
-                        <p>${nomDuMedia}</p>
-                    `;
-                    
-                    catalog.appendChild(movieCard);
-                })
-                .catch(error => console.error("Erreur avec l'ID " + item.id, error));
+<!-- LES GRILLES -->
+<h3 class="movies-label" id="label-series">Nos Séries</h3>
+<section class="movies" id="grid-series"></section>
+
+<h3 class="movies-label" id="label-films">Nos Films</h3>
+<section class="movies" id="grid-films"></section>
+  
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = { apiKey: "AIzaSyAQnexePSWAJdgZc2WO2BFKL8Z_jnDKbqE", authDomain: "yamonfilm-fead8.firebaseapp.com", projectId: "yamonfilm-fead8" };
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const TMDB_API_KEY = "182c7173698e34803715eacab5c693a7";
+
+// --- CONFIGURATION CATALOGUE ---
+const mesSeries = [
+    { id: 914, dbKey: "LECLOWN", defaultLink: "le clown.html", vipLink: "vipleclown.html" },
+    { id: 4414, dbKey: "MEDICOPTER", defaultLink: "medicopter.html", vipLink: "vipmedicopter.html" },
+    { id: 4429, dbKey: "MARTIAL_LAW", defaultLink: "flicdeshangai.html", vipLink: "vipflicdeshangai.html" },
+    { id: 600, dbKey: "LE_REBELLE", defaultLink: "lerebelle.html", vipLink: "viplerebelle.html" }
+];
+
+const mesFilms = [
+    { id: 18274, dbKey: "SUPERCROSS", defaultLink: "supercross.html", vipLink: "vipersupercross.html" }
+];
+
+window.toggleMenu = () => {
+    document.getElementById("menu").classList.toggle("open");
+    document.getElementById("overlay").classList.toggle("show");
+};
+
+document.getElementById("logoutBtn").onclick = () => signOut(auth).then(() => window.location.href = "login.html");
+
+// Carrousel
+let currentSlide = 0;
+const slides = document.querySelectorAll('.hero-slide');
+setInterval(() => {
+    slides[currentSlide].classList.remove('active');
+    currentSlide = (currentSlide + 1) % slides.length;
+    slides[currentSlide].classList.add('active');
+}, 6000);
+
+onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = "login.html"; return; }
+    
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (snap.exists()) {
+        const data = snap.data();
+        const unlocked = data.seriesUnlocked || [];
+
+        if (unlocked.includes("LECLOWN") || unlocked.includes("vipclown")) {
+            document.getElementById("heroClownBtn").href = "vipleclown.html";
+        }
+        if (unlocked.includes("MEDICOPTER")) {
+            document.getElementById("heroMedicBtn").href = "vipmedicopter.html";
+        }
+
+        // On attend que les deux grilles soient générées avant d'activer la recherche
+        await Promise.all([
+            genererGrille(mesSeries, "tv", "grid-series", unlocked),
+            genererGrille(mesFilms, "movie", "grid-films", unlocked)
+        ]);
+
+        // Activation de la fonction de filtrage
+        creerSystemeRecherche();
+
+        if (data.progress?.lastBySerie) {
+            displayContinue(data.progress.lastBySerie, unlocked);
+        }
+    }
+});
+
+function genererGrille(listeMedia, type, elementId, unlocked) {
+    const container = document.getElementById(elementId);
+    container.innerHTML = "";
+
+    const poms = listeMedia.map(media => {
+        return fetch(`https://api.themoviedb.org/3/${type}/${media.id}?api_key=${TMDB_API_KEY}&language=fr-FR`)
+            .then(res => res.json())
+            .then(data => {
+                const card = document.createElement("a");
+                card.className = "movie";
+                
+                const bgPath = data.backdrop_path || data.poster_path;
+                if(bgPath) card.style.backgroundImage = `url(https://image.tmdb.org/t/p/w780${bgPath})`;
+
+                let finalHref = media.defaultLink;
+                let textAffichage = data.name || data.title;
+
+                if (unlocked.includes(media.dbKey) || (media.dbKey === "LECLOWN" && unlocked.includes("vipclown"))) {
+                    finalHref = media.vipLink;
+                    textAffichage += " VIP 🔥";
+                }
+
+                card.href = finalHref;
+                card.innerText = textAffichage;
+                
+                // IMPORTANT : On stocke le nom en minuscule dans la carte pour pouvoir chercher dedans
+                card.setAttribute("data-title", (data.name || data.title).toLowerCase());
+                
+                container.appendChild(card);
+            });
+    });
+    return Promise.all(poms);
+}
+
+// --- LOGIQUE DE LA BARRE DE RECHERCHE ---
+function creerSystemeRecherche() {
+    const searchInput = document.getElementById("localSearch");
+    
+    searchInput.addEventListener("input", (e) => {
+        const valeurAChercher = e.target.value.toLowerCase().trim();
+        const toutesLesCartes = document.querySelectorAll(".movie");
+        
+        toutesLesCartes.forEach(carte => {
+            const titreFilm = carte.getAttribute("data-title");
+            
+            // Si la recherche est vide OU si le titre contient le mot cherché, on l'affiche
+            if (valeurAChercher === "" || titreFilm.includes(valeurAChercher)) {
+                carte.style.display = "flex";
+            } else {
+                carte.style.display = "none"; // Sinon on le cache
+            }
         });
-    </script>
+
+        // Gestion propre de l'affichage des titres des catégories "Nos Séries" et "Nos Films"
+        gererTitresCategories();
+    });
+}
+
+function gererTitresCategories() {
+    const seriesVisibles = document.querySelectorAll("#grid-series .movie[style*='display: flex']").length || document.querySelectorAll("#grid-series .movie:not([style*='display: none'])").length;
+    const filmsVisibles = document.querySelectorAll("#grid-films .movie[style*='display: flex']").length || document.querySelectorAll("#grid-films .movie:not([style*='display: none'])").length;
+
+    document.getElementById("label-series").style.display = seriesVisibles === 0 ? "none" : "block";
+    document.getElementById("label-films").style.display = filmsVisibles === 0 ? "none" : "block";
+}
+
+function displayContinue(lastBySerie, unlocked) {
+    const container = document.getElementById("continue-container");
+    const section = document.getElementById("continue-watching");
+    container.innerHTML = "";
+    const items = Object.values(lastBySerie).sort((a, b) => b.timestamp - a.timestamp);
+
+    if (items.length > 0) {
+        section.style.display = "block";
+        items.forEach(item => {
+            const card = document.createElement("a");
+            card.className = "continue-card";
+            card.href = item.link;
+            card.innerHTML = `
+                <div class="img-container"><img src="${item.img.startsWith('http') ? item.img : `https://image.tmdb.org/t/p/w300${item.img}`}"></div>
+                <div style="margin-top:10px;"><b>${item.serieName}</b><br><span style="font-size:12px; color:#aaa;">S${item.s} : E${item.e}</span></div>`;
+            container.appendChild(card);
+        });
+    }
+}
+</script>
 </body>
 </html>
