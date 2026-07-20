@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YAMONFILM - Lecteur</title>
+    <style>
+        body { background-color: #0f0f0f; color: white; font-family: Arial, sans-serif; margin: 0; padding: 20px; text-align: center; }
+        .container { max-width: 1000px; margin: 40px auto 0 auto; }
+        h1 { margin-bottom: 20px; font-size: 28px; }
+        .video-responsive {
+            position: relative;
+            padding-bottom: 56.25%; /* Ratio 16:9 */
+            height: 0;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0px 4px 20px rgba(0,0,0,0.9);
+            background: #000;
+            border: 1px solid #333;
+        }
+        .video-responsive iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        .back-btn { display: inline-block; margin-bottom: 20px; color: #ccc; text-decoration: none; font-size: 14px; }
+        .back-btn:hover { color: #e50914; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <a href="index.html" class="back-btn">← Retour au catalogue</a>
+        <h1 id="movie-title">Chargement du lecteur...</h1>
+
+        <div class="video-responsive">
+            <iframe id="streaming-player" src="" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = '182c7173698e34803715eacab5c693a7'; 
+
+        // 1. On récupère l'ID et le type dans l'adresse URL du site
+        const urlParams = new URLSearchParams(window.location.search);
+        const movieId = urlParams.get('id');
+        const mediaType = urlParams.get('type') || 'movie'; 
+
+        if (movieId) {
+            // 2. Configuration du lecteur automatique (vidsrc) selon si c'est un film ou une série
+            let playerUrl = '';
+            if (mediaType === 'tv') {
+                // Si c'est une série, ça lance la Saison 1, Épisode 1 automatiquement (les boutons de changement d'épisode sont intégrés dans le lecteur)
+                playerUrl = `https://vidsrc.to/embed/tv/${movieId}/1/1`;
+            } else {
+                playerUrl = `https://vidsrc.to/embed/movie/${movieId}`;
+            }
+            document.getElementById('streaming-player').src = playerUrl;
+
+            // 3. On récupère le titre en français pour l'afficher au-dessus de la vidéo
+            fetch(`https://api.themoviedb.org/3/${mediaType}/${movieId}?api_key=${API_KEY}&language=fr-FR`)
+                .then(response => response.json())
+                .then(media => {
+                    const nomDuMedia = media.title || media.name;
+                    if(nomDuMedia) {
+                        document.getElementById('movie-title').textContent = nomDuMedia;
+                        document.title = `Regarder ${nomDuMedia} en Streaming`;
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('movie-title').textContent = "Lecture en cours";
+                });
+        } else {
+            document.getElementById('movie-title').textContent = "Aucun film sélectionné.";
+        }
+    </script>
+
+</body>
+</html>
